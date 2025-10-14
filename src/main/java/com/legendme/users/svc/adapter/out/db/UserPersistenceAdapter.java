@@ -1,5 +1,6 @@
 package com.legendme.users.svc.adapter.out.db;
 
+import com.legendme.users.svc.adapter.out.db.mapper.UserPersistenceMapper;
 import com.legendme.users.svc.application.port.out.UserRepository;
 import com.legendme.users.svc.domain.model.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;

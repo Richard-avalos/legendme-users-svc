@@ -1,5 +1,6 @@
-package com.legendme.users.svc.adapter.out.db;
+package com.legendme.users.svc.adapter.out.db.mapper;
 
+import com.legendme.users.svc.adapter.out.db.UserJpaEntity;
 import com.legendme.users.svc.domain.model.User;
 
 public class UserPersistenceMapper {

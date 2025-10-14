@@ -5,6 +5,7 @@ import java.util.Date;
 public record UpdateUserRequest (
     String name,
     String lastname,
-    Date birthDate,
-    Boolean active
+    String username,
+    String email,
+    Date birthDate
 ){ }

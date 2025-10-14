@@ -69,6 +69,9 @@ public class UserController {
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     }
 
+
+
+
     // Existe email
     @PostMapping("/exists-by-email")
     public ExistsResponse existsByEmail(@RequestBody EmailRequest request) {
