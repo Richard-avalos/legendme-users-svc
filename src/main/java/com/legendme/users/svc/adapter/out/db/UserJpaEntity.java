@@ -17,6 +17,27 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+
+/**
+ * Entidad JPA que representa a un usuario en la base de datos.
+ * Mapea los campos de la tabla "users" y gestiona automáticamente
+ * las fechas de creación y actualización mediante auditoría.
+ * Utilizada en el contexto de persistencia para operaciones CRUD.
+ * Incluye información personal, credenciales y metadatos de la cuenta.
+ *
+ * @param id identificador único del usuario
+ * @param name nombre del usuario
+ * @param lastname apellido del usuario
+ * @param birthDate fecha de nacimiento del usuario
+ * @param username nombre de usuario único
+ * @param email correo electrónico del usuario
+ * @param password contraseña del usuario
+ * @param provider proveedor de autenticación
+ * @param active estado de la cuenta
+ * @param createdAt fecha de creación de la cuenta
+ * @param updatedAt fecha de la última actualización de la cuenta
+ *
+ */
 public class UserJpaEntity {
 
     @Id
