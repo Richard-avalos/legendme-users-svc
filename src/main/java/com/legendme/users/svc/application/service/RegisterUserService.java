@@ -180,7 +180,6 @@ public class RegisterUserService {
                 new Date()
         );
         userRepository.save(deleted,null);
-     
     }
 
 }
