@@ -3,6 +3,7 @@ package com.legendme.users.svc.application.service;
 import com.legendme.users.svc.application.port.out.UserRepository;
 import com.legendme.users.svc.domain.model.User;
 import org.springframework.stereotype.Service;
+import com.legendme.users.svc.shared.exceptions.ErrorException;
 
 import java.util.List;
 import java.util.Optional;
