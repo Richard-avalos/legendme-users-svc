@@ -4,6 +4,7 @@ import com.legendme.users.svc.adapter.in.rest.dto.CreateUserRequest;
 import com.legendme.users.svc.adapter.in.rest.dto.UpdateUserRequest;
 import com.legendme.users.svc.application.port.out.UserRepository;
 import com.legendme.users.svc.domain.model.User;
+import com.legendme.users.svc.shared.exceptions.ErrorException;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -43,29 +44,29 @@ public class RegisterUserService {
     */
     public User registerLocalUser(CreateUserRequest request){
         if (!"LOCAL".equalsIgnoreCase(request.provider()))
-            throw new IllegalArgumentException("Provider debe ser LOCAL");
+            throw new ErrorException("Provider debe ser LOCAL");
 
         if (request.name()==null || request.name().isBlank())
-            throw new IllegalArgumentException("El nombre es obligatorio");
+            throw new ErrorException("El nombre es obligatorio");
         if (request.lastname()==null || request.lastname().isBlank())
-            throw new IllegalArgumentException("El apellido es obligatorio");
+            throw new ErrorException("El apellido es obligatorio");
         if (request.username()==null || request.username().isBlank())
-            throw new IllegalArgumentException("El username es obligatorio");
+            throw new ErrorException("El username es obligatorio");
         if (request.email()==null || request.email().isBlank())
-            throw new IllegalArgumentException("El email es obligatorio");
+            throw new ErrorException("El email es obligatorio");
         if (request.password()==null || request.password().isBlank())
-            throw new IllegalArgumentException("El password es obligatorio");
+            throw new ErrorException("El password es obligatorio");
 
         if (!request.email().matches("^[A-Za-z0-9+_.-]+@(.+)$"))
-            throw new IllegalArgumentException("El email no es válido");
+            throw new ErrorException("El email no es válido");
 
         // Validar que el email y username no existan
         if(userRepository.existsByEmail(request.email().toLowerCase())){
-            throw new RuntimeException("El email ya está en uso");
+            throw new ErrorException("El email ya está en uso");
         }
         // Validar que el username no exista
         if(userRepository.existsByUsername(request.username().toLowerCase())){
-            throw new RuntimeException("El username ya está en uso");
+            throw new ErrorException("El username ya está en uso");
         }
 
         User user = new User(
@@ -87,18 +88,18 @@ public class RegisterUserService {
      * Si el usuario ya existe, actualiza su información; si no, lo crea.
      * @param request DTO con los datos del usuario de Google.
      * @return El usuario creado o actualizado.
-     * @throws IllegalArgumentException si los datos de entrada son inválidos.
-     * @throws RuntimeException si el email ya está en uso con otro proveedor.
+     * @throws ErrorException si los datos de entrada son inválidos.
+     * @throws ErrorException si el email ya está en uso con otro proveedor.
      */
     public User upsertGoogleUser(CreateUserRequest request) {
         if (!"GOOGLE".equalsIgnoreCase(request.provider()))
-            throw new IllegalArgumentException("Provider debe ser GOOGLE");
+            throw new ErrorException("Provider debe ser GOOGLE");
 
         Optional<User> existingUserOpt = userRepository.findByEmail(request.email().toLowerCase());
 
         if (existingUserOpt.isPresent() &&
                 !"GOOGLE".equalsIgnoreCase(existingUserOpt.get().provider())) {
-            throw new RuntimeException("El email ya está en uso con otro proveedor");
+            throw new ErrorException("El email ya está en uso con otro proveedor");
         }
 
         User user = new User(
@@ -123,22 +124,22 @@ public class RegisterUserService {
      * @param id UUID del usuario a actualizar.
      * @param request DTO con los campos a actualizar (pueden ser nulos).
      * @return El usuario actualizado.
-     * @throws RuntimeException si el usuario no es encontrado o si hay conflictos con email/username.
+     * @throws ErrorException si el usuario no es encontrado o si hay conflictos con email/username.
      */
     public User updateUserPartial(UUID id, UpdateUserRequest request) {
         User u = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new ErrorException("Usuario no encontrado"));
 
         // Validaciones opcionales
         if (request.email() != null && !request.email().equalsIgnoreCase(u.email())) {
             if (userRepository.existsByEmail(request.email().toLowerCase())) {
-                throw new RuntimeException("El correo ya está en uso por otro usuario");
+                throw new ErrorException("El correo ya está en uso por otro usuario");
             }
         }
 
         if (request.username() != null && !request.username().equalsIgnoreCase(u.username())) {
             if (userRepository.existsByUsername(request.username().toLowerCase())) {
-                throw new RuntimeException("El nombre de usuario ya está en uso");
+                throw new ErrorException("El nombre de usuario ya está en uso");
             }
         }
 
@@ -161,11 +162,11 @@ public class RegisterUserService {
     /** Desactivar usuario (soft delete)
      * Marca al usuario como inactivo sin eliminarlo de la base de datos.
      * @param id UUID del usuario a desactivar.
-     * @throws RuntimeException si el usuario no es encontrado.
+     * @throws ErrorException si el usuario no es encontrado.
      */
     public void deactivateUser(UUID id){
         User u = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new ErrorException("Usuario no encontrado"));
         User deleted = new User(
                 u.id(),
                 u.name(),
