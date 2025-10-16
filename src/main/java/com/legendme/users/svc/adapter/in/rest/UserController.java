@@ -15,22 +15,53 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Esta clase es un controlador REST que maneja las solicitudes relacionadas con los usuarios.
+ * Proporciona endpoints para crear, buscar, actualizar y desactivar usuarios.
+ * Utiliza servicios de aplicación para realizar las operaciones necesarias y mapea
+ * los datos entre los modelos de dominio y los DTOs de la API REST.
+ *
+ */
 @RestController
 @RequestMapping("/legendme/users")
 public class UserController {
 
+    /**
+     * Logger para registrar eventos y errores en el controlador.
+     */
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
-
+    /**
+     * Servicio para registrar y gestionar usuarios.
+     */
     private final RegisterUserService registerUserService;
+    /**
+     * Servicio para buscar y verificar usuarios.
+     */
     private final FindUserService findUserService;
+    /**
+     * Utilidad para manejar JWT y extraer información del token.
+     */
     private final JwtUtils jwtUtils;
 
+    /**
+     * Constructor para la inyección de dependencias de los servicios y utilidades necesarias.
+     *
+     * @param registerUserService Servicio para registrar y gestionar usuarios.
+     * @param findUserService Servicio para buscar y verificar usuarios.
+     * @param jwtUtils Utilidad para manejar JWT.
+     */
     public UserController(RegisterUserService registerUserService, FindUserService findUserService, JwtUtils jwtUtils) {
         this.registerUserService = registerUserService;
         this.findUserService = findUserService;
         this.jwtUtils = jwtUtils;
     }
 
+    /**
+     * Endpoint para crear un nuevo usuario con autenticación local.
+     *
+     * @param request DTO con los datos del nuevo usuario.
+     * @return DTO con los datos del usuario creado.
+     */
     @PostMapping("/create")
     public UserResponse createUser(@RequestBody CreateUserRequest request) {
         log.info("Entrada a createUser con request: {}", request.toString());
@@ -45,6 +76,12 @@ public class UserController {
         }
     }
 
+    /**
+     * Endpoint para insertar o actualizar un usuario autenticado con Google.
+     *
+     * @param request DTO con los datos del usuario de Google.
+     * @return DTO con los datos del usuario creado o actualizado.
+     */
     @PostMapping("/create/google-user")
     public UserResponse upsertGoogle(@RequestBody CreateUserRequest request) {
         log.info("Entrada a upsertGoogle con request: {}", request.toString());
@@ -59,6 +96,12 @@ public class UserController {
         }
     }
 
+    /**
+     * Endpoint para buscar todos los usuarios.
+     *
+     * @param httpRequest Solicitud HTTP para extraer el token JWT.
+     * @return DTO con la lista de usuarios encontrados y el total.
+     */
     @PostMapping("/search")
     public UserSearchResponse searchUsers(HttpServletRequest httpRequest) {
         log.info("Entrada a searchUsers");
@@ -78,6 +121,13 @@ public class UserController {
         }
     }
 
+    /**
+     * Endpoint para buscar un usuario por su ID.
+     *
+     * @param id UUID del usuario a buscar.
+     * @param httpRequest Solicitud HTTP para extraer el token JWT.
+     * @return DTO con los datos del usuario encontrado.
+     */
     @GetMapping("/{id}")
     public UserResponse getUserById(@PathVariable UUID id, HttpServletRequest httpRequest) {
         log.info("Entrada a getUserById con id: {}", id);
@@ -95,6 +145,12 @@ public class UserController {
         }
     }
 
+    /**
+     * Endpoint para desactivar un usuario por su ID.
+     *
+     * @param id UUID del usuario a desactivar.
+     * @param httpRequest Solicitud HTTP para extraer el token JWT.
+     */
     @PatchMapping("/{id}/deactivate")
     public void deactivateUser(@PathVariable UUID id, HttpServletRequest httpRequest) {
         log.info("Entrada a deactivateUser con id: {}", id);
@@ -108,7 +164,13 @@ public class UserController {
             throw e;
         }
     }
-
+    /**
+     * Endpoint para buscar un usuario por su email.
+     *
+     * @param request DTO con el email del usuario a buscar.
+     * @param httpRequest Solicitud HTTP para extraer el token JWT.
+     * @return DTO con los datos del usuario encontrado.
+     */
     @PostMapping("/by-email")
     public UserResponse getUserByEmail(@RequestBody EmailRequest request, HttpServletRequest httpRequest) {
         log.info("Entrada a getUserByEmail con request: {}", request.toString());
@@ -126,6 +188,13 @@ public class UserController {
         }
     }
 
+    /**
+     * Endpoint para verificar si un usuario existe por su email.
+     *
+     * @param request DTO con el email a verificar.
+     * @param httpRequest Solicitud HTTP para extraer el token JWT.
+     * @return DTO indicando si el usuario existe o no.
+     */
     @PostMapping("/exists-by-email")
     public ExistsResponse existsByEmail(@RequestBody EmailRequest request, HttpServletRequest httpRequest) {
         log.info("Entrada a existsByEmail con request: {}", request.toString());
@@ -142,6 +211,13 @@ public class UserController {
         }
     }
 
+    /**
+     * Endpoint para buscar un usuario por su nombre de usuario.
+     *
+     * @param username Nombre de usuario a buscar.
+     * @param httpRequest Solicitud HTTP para extraer el token JWT.
+     * @return DTO con los datos del usuario encontrado.
+     */
     @GetMapping("/by-username/{username}")
     public UserResponse getUserByUsername(@PathVariable String username, HttpServletRequest httpRequest) {
         log.info("Entrada a getUserByUsername con username: {}", username);
@@ -159,6 +235,12 @@ public class UserController {
         }
     }
 
+    /**
+     * Endpoint para obtener todos los usuarios.
+     *
+     * @param httpRequest Solicitud HTTP para extraer el token JWT.
+     * @return Lista de DTOs con los datos de todos los usuarios.
+     */
     @GetMapping("/all")
     public List<UserResponse> getAllUsers(HttpServletRequest httpRequest) {
         log.info("Entrada a getAllUsers");
@@ -177,6 +259,14 @@ public class UserController {
         }
     }
 
+    /**
+     * Endpoint para actualizar parcialmente un usuario por su ID.
+     *
+     * @param id UUID del usuario a actualizar.
+     * @param request DTO con los campos a actualizar (pueden ser nulos).
+     * @param httpRequest Solicitud HTTP para extraer el token JWT.
+     * @return DTO con los datos del usuario actualizado.
+     */
     @PatchMapping("/{id}")
     public UserResponse updateUser(@PathVariable UUID id, @RequestBody UpdateUserRequest request, HttpServletRequest httpRequest) {
         log.info("Entrada a updateUser con id: {} y request: {}", id, request.toString());

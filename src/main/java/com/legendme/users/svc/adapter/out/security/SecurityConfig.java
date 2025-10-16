@@ -17,10 +17,23 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
+/**
+ * Configuración de seguridad para la aplicación.
+ * Configura la autenticación y autorización utilizando JWT (JSON Web Tokens).
+ * Define las reglas de acceso a los endpoints y la validación de los tokens JWT.
+ */
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    /**
+     * Configura la cadena de filtros de seguridad.
+     *
+     * @param http            El objeto HttpSecurity para configurar la seguridad HTTP.
+     * @param jwtAuthConverter El convertidor de autenticación JWT.
+     * @return La cadena de filtros de seguridad configurada.
+     * @throws Exception Si ocurre un error durante la configuración.
+     */
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationConverter jwtAuthConverter) throws Exception {
         http
@@ -35,6 +48,13 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * Configura el decodificador de JWT.
+     *
+     * @param secret El secreto utilizado para firmar los tokens JWT.
+     * @param issuer El emisor esperado de los tokens JWT.
+     * @return El decodificador de JWT configurado.
+     */
     @Bean
     JwtDecoder jwtDecoder(
             @Value("${jwt.secret}") String secret,
@@ -54,6 +74,11 @@ public class SecurityConfig {
         return decoder;
     }
 
+    /**
+     * Configura el convertidor de autenticación JWT.
+     *
+     * @return El convertidor de autenticación JWT configurado.
+     */
     @Bean
     JwtAuthenticationConverter jwtAuthConverter() {
         var conv = new JwtAuthenticationConverter();
