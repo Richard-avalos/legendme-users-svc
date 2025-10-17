@@ -40,6 +40,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("actuator/health").permitAll()
+                        .requestMatchers("/legendme/users/create/google-user").permitAll()
+                        .requestMatchers("/legendme/users/create").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2

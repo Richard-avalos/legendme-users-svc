@@ -6,6 +6,7 @@ import com.legendme.users.svc.adapter.out.security.JwtUtils;
 import com.legendme.users.svc.application.service.FindUserService;
 import com.legendme.users.svc.application.service.RegisterUserService;
 import com.legendme.users.svc.domain.model.User;
+import com.legendme.users.svc.shared.exceptions.ErrorException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +21,6 @@ import java.util.stream.Collectors;
  * Proporciona endpoints para crear, buscar, actualizar y desactivar usuarios.
  * Utiliza servicios de aplicación para realizar las operaciones necesarias y mapea
  * los datos entre los modelos de dominio y los DTOs de la API REST.
- *
  */
 @RestController
 @RequestMapping("/legendme/users")
@@ -47,8 +47,8 @@ public class UserController {
      * Constructor para la inyección de dependencias de los servicios y utilidades necesarias.
      *
      * @param registerUserService Servicio para registrar y gestionar usuarios.
-     * @param findUserService Servicio para buscar y verificar usuarios.
-     * @param jwtUtils Utilidad para manejar JWT.
+     * @param findUserService     Servicio para buscar y verificar usuarios.
+     * @param jwtUtils            Utilidad para manejar JWT.
      */
     public UserController(RegisterUserService registerUserService, FindUserService findUserService, JwtUtils jwtUtils) {
         this.registerUserService = registerUserService;
@@ -70,7 +70,7 @@ public class UserController {
             UserResponse response = UserRestMapper.toUserResponse(user);
             log.info("Salida de createUser con respuesta: {}", response.toString());
             return response;
-        } catch (Exception e) {
+        } catch (ErrorException e) {
             log.error("Error en createUser: {}", e.getMessage(), e);
             throw e;
         }
@@ -90,7 +90,7 @@ public class UserController {
             UserResponse response = UserRestMapper.toUserResponse(user);
             log.info("Salida de upsertGoogle con respuesta: {}", response.toString());
             return response;
-        } catch (Exception e) {
+        } catch (ErrorException e) {
             log.error("Error en upsertGoogle: {}", e.getMessage(), e);
             throw e;
         }
@@ -115,7 +115,7 @@ public class UserController {
             );
             log.info("Salida de searchUsers con {} usuarios encontrados", users.size());
             return response;
-        } catch (Exception e) {
+        } catch (ErrorException e) {
             log.error("Error en searchUsers: {}", e.getMessage(), e);
             throw e;
         }
@@ -124,7 +124,6 @@ public class UserController {
     /**
      * Endpoint para buscar un usuario por su ID.
      *
-     * @param id UUID del usuario a buscar.
      * @param httpRequest Solicitud HTTP para extraer el token JWT.
      * @return DTO con los datos del usuario encontrado.
      */
@@ -132,11 +131,10 @@ public class UserController {
     public UserResponse getUserById(@PathVariable UUID id, HttpServletRequest httpRequest) {
         log.info("Entrada a getUserById con id: {}", id);
         try {
-            String authUserId = jwtUtils.getUserIdFromRequest(httpRequest);
-            log.info("Usuario autenticado haciendo /by-id: {}", authUserId);
+            log.info("Pedido de busqueda por ID");
             UserResponse response = findUserService.findById(id)
                     .map(UserRestMapper::toUserResponse)
-                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                    .orElseThrow(() -> new ErrorException("Usuario no encontrado"));
             log.info("Salida de getUserById con usuario: {}", response.toString());
             return response;
         } catch (Exception e) {
@@ -148,26 +146,25 @@ public class UserController {
     /**
      * Endpoint para desactivar un usuario por su ID.
      *
-     * @param id UUID del usuario a desactivar.
+     * @param id          UUID del usuario a desactivar.
      * @param httpRequest Solicitud HTTP para extraer el token JWT.
      */
     @PatchMapping("/{id}/deactivate")
     public void deactivateUser(@PathVariable UUID id, HttpServletRequest httpRequest) {
         log.info("Entrada a deactivateUser con id: {}", id);
         try {
-            String authUserId = jwtUtils.getUserIdFromRequest(httpRequest);
-            log.info("Usuario autenticado haciendo /deactivate: {}", authUserId);
             registerUserService.deactivateUser(id);
             log.info("Usuario desactivado correctamente: {}", id);
-        } catch (Exception e) {
+        } catch (ErrorException e) {
             log.error("Error en deactivateUser: {}", e.getMessage(), e);
             throw e;
         }
     }
+
     /**
      * Endpoint para buscar un usuario por su email.
      *
-     * @param request DTO con el email del usuario a buscar.
+     * @param request     DTO con el email del usuario a buscar.
      * @param httpRequest Solicitud HTTP para extraer el token JWT.
      * @return DTO con los datos del usuario encontrado.
      */
@@ -175,14 +172,12 @@ public class UserController {
     public UserResponse getUserByEmail(@RequestBody EmailRequest request, HttpServletRequest httpRequest) {
         log.info("Entrada a getUserByEmail con request: {}", request.toString());
         try {
-            String authUserId = jwtUtils.getUserIdFromRequest(httpRequest);
-            log.info("Usuario autenticado haciendo /by-email: {}", authUserId);
             UserResponse response = findUserService.findByEmail(request.email())
                     .map(UserRestMapper::toUserResponse)
-                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                    .orElseThrow(() -> new ErrorException("Usuario no encontrado"));
             log.info("Salida de getUserByEmail con respuesta: {}", response.toString());
             return response;
-        } catch (Exception e) {
+        } catch (ErrorException e) {
             log.error("Error en getUserByEmail: {}", e.getMessage(), e);
             throw e;
         }
@@ -191,7 +186,7 @@ public class UserController {
     /**
      * Endpoint para verificar si un usuario existe por su email.
      *
-     * @param request DTO con el email a verificar.
+     * @param request     DTO con el email a verificar.
      * @param httpRequest Solicitud HTTP para extraer el token JWT.
      * @return DTO indicando si el usuario existe o no.
      */
@@ -199,13 +194,11 @@ public class UserController {
     public ExistsResponse existsByEmail(@RequestBody EmailRequest request, HttpServletRequest httpRequest) {
         log.info("Entrada a existsByEmail con request: {}", request.toString());
         try {
-            String authUserId = jwtUtils.getUserIdFromRequest(httpRequest);
-            log.info("Usuario autenticado haciendo /exists-by-email: {}", authUserId);
             boolean exists = findUserService.existsByEmail(request.email());
             ExistsResponse response = new ExistsResponse(exists);
             log.info("Salida de existsByEmail con resultado: {}", response.toString());
             return response;
-        } catch (Exception e) {
+        } catch (ErrorException e) {
             log.error("Error en existsByEmail: {}", e.getMessage(), e);
             throw e;
         }
@@ -214,7 +207,7 @@ public class UserController {
     /**
      * Endpoint para buscar un usuario por su nombre de usuario.
      *
-     * @param username Nombre de usuario a buscar.
+     * @param username    Nombre de usuario a buscar.
      * @param httpRequest Solicitud HTTP para extraer el token JWT.
      * @return DTO con los datos del usuario encontrado.
      */
@@ -222,14 +215,12 @@ public class UserController {
     public UserResponse getUserByUsername(@PathVariable String username, HttpServletRequest httpRequest) {
         log.info("Entrada a getUserByUsername con username: {}", username);
         try {
-            String authUserId = jwtUtils.getUserIdFromRequest(httpRequest);
-            log.info("Usuario autenticado haciendo /by-username: {}", authUserId);
             UserResponse response = findUserService.findByUsername(username)
                     .map(UserRestMapper::toUserResponse)
-                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                    .orElseThrow(() -> new ErrorException("Usuario no encontrado"));
             log.info("Salida de getUserByUsername con respuesta: {}", response.toString());
             return response;
-        } catch (Exception e) {
+        } catch (ErrorException e) {
             log.error("Error en getUserByUsername: {}", e.getMessage(), e);
             throw e;
         }
@@ -245,15 +236,13 @@ public class UserController {
     public List<UserResponse> getAllUsers(HttpServletRequest httpRequest) {
         log.info("Entrada a getAllUsers");
         try {
-            String authUserId = jwtUtils.getUserIdFromRequest(httpRequest);
-            log.info("Usuario autenticado haciendo /all: {}", authUserId);
             List<UserResponse> response = findUserService.findAll()
                     .stream()
                     .map(UserRestMapper::toUserResponse)
                     .toList();
             log.info("Salida de getAllUsers con {} usuarios", response.size());
             return response;
-        } catch (Exception e) {
+        } catch (ErrorException e) {
             log.error("Error en getAllUsers: {}", e.getMessage(), e);
             throw e;
         }
@@ -262,24 +251,28 @@ public class UserController {
     /**
      * Endpoint para actualizar parcialmente un usuario por su ID.
      *
-     * @param id UUID del usuario a actualizar.
-     * @param request DTO con los campos a actualizar (pueden ser nulos).
+     * @param request     DTO con los campos a actualizar (pueden ser nulos).
      * @param httpRequest Solicitud HTTP para extraer el token JWT.
      * @return DTO con los datos del usuario actualizado.
      */
-    @PatchMapping("/{id}")
-    public UserResponse updateUser(@PathVariable UUID id, @RequestBody UpdateUserRequest request, HttpServletRequest httpRequest) {
-        log.info("Entrada a updateUser con id: {} y request: {}", id, request.toString());
+    @PatchMapping("/update")
+    public UserResponse updateUser(@RequestBody UpdateUserRequest request, HttpServletRequest httpRequest) {
+        log.info("Entrada a updateUser con request: {}", request);
+
         try {
-            String authUserId = jwtUtils.getUserIdFromRequest(httpRequest);
+            UUID authUserId = UUID.fromString(jwtUtils.getUserIdFromRequest(httpRequest));
             log.info("Usuario autenticado haciendo PATCH /update: {}", authUserId);
-            User user = registerUserService.updateUserPartial(id, request);
-            UserResponse response = UserRestMapper.toUserResponse(user);
-            log.info("Salida de updateUser con respuesta: {}", response.toString());
+
+            User updatedUser = registerUserService.updateUserPartial(authUserId, request);
+
+            UserResponse response = UserRestMapper.toUserResponse(updatedUser);
+            log.info("Salida de updateUser con respuesta: {}", response);
             return response;
-        } catch (Exception e) {
+
+        } catch (ErrorException e) {
             log.error("Error en updateUser: {}", e.getMessage(), e);
             throw e;
         }
     }
+
 }

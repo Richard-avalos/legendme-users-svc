@@ -67,7 +67,17 @@ mvn spring-boot:run
 La aplicación debería estar corriendo en [http://localhost:8080](http://localhost:8080)
 
 ---
+## 🔒 Autenticación y Headers
 
+A partir de las últimas versiones, **casi todos los endpoints** requieren un token **JWT**.  
+Debe incluirse en el header de la solicitud:
+
+```http
+
+Authorization: Bearer <tu_token_jwt>
+
+```http
+```
 ## 📚 Endpoints principales
 
 ### 1️⃣ Crear usuario local
