@@ -3,6 +3,7 @@ package com.legendme.users.svc.application.service;
 import com.legendme.users.svc.application.port.out.UserRepository;
 import com.legendme.users.svc.domain.model.User;
 import org.springframework.stereotype.Service;
+import com.legendme.users.svc.shared.exceptions.ErrorException;
 
 import java.util.List;
 import java.util.Optional;
@@ -37,7 +38,7 @@ public class FindUserService {
      */
     public Optional<User> findById(UUID id){
         if (id == null) {
-            throw new IllegalArgumentException("El ID no puede ser nulo");
+            throw new ErrorException("El ID no puede ser nulo");
         }
         return userRepository.findById(id);
     }
@@ -48,7 +49,7 @@ public class FindUserService {
      */
     public Optional<User> findByEmail(String email){
         if(email == null || email.isBlank()){
-            throw new IllegalArgumentException("El email no puede ser nulo o vacío");
+            throw new ErrorException("El email no puede ser nulo o vacío");
         }
         return userRepository.findByEmail(email.toLowerCase() );
     }
@@ -59,7 +60,7 @@ public class FindUserService {
      */
     public Optional<User> findByUsername(String username){
         if(username == null || username.isBlank()){
-            throw new IllegalArgumentException("El username no puede ser nulo o vacío");
+            throw new ErrorException("El username no puede ser nulo o vacío");
         }
         return userRepository.findByUsername(username.toLowerCase());
     }
@@ -77,7 +78,7 @@ public class FindUserService {
      */
     public boolean existsByEmail(String email){
         if(email == null || email.isBlank()){
-            throw new IllegalArgumentException("El email no puede ser nulo o vacío");
+            throw new ErrorException("El email no puede ser nulo o vacío");
         }
         return userRepository.existsByEmail(email.toLowerCase());
     }
@@ -88,7 +89,7 @@ public class FindUserService {
      */
     public boolean existsByUsername(String username){
         if(username == null || username.isBlank()){
-            throw new IllegalArgumentException("El username no puede ser nulo o vacío");
+            throw new ErrorException("El username no puede ser nulo o vacío");
         }
         return userRepository.existsByUsername(username.toLowerCase());
     }

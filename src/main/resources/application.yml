@@ -1,0 +1,24 @@
+server:
+  port: 8082
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt: {}
+
+
+jwt:
+  issuer: legendme-login-svc
+  secret: ${JWT_SECRET:dev256bitsecretpleasechangethisverylong3456789346745678}
+
+logging:
+  level:
+    root: INFO
+    org.springframework: WARN
+    org.springframework.boot: WARN
+    org.springframework.web: WARN
+    org.springframework.security: INFO
+    org.apache.catalina: WARN
+    org.apache.coyote: WARN
+    org.hibernate: WARN
