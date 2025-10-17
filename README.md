@@ -76,7 +76,6 @@ Debe incluirse en el header de la solicitud:
 
 Authorization: Bearer <tu_token_jwt>
 
-```http
 ```
 ## 📚 Endpoints principales
 
