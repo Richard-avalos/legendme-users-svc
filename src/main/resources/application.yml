@@ -3,6 +3,8 @@ server:
 
 spring:
   security:
+    s2s-token: ${API_KEY}
+
     oauth2:
       resourceserver:
         jwt: {}

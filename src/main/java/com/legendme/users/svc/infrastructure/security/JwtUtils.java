@@ -1,4 +1,4 @@
-package com.legendme.users.svc.adapter.out.security;
+package com.legendme.users.svc.infrastructure.security;
 
 import com.legendme.users.svc.shared.exceptions.ErrorException;
 import jakarta.servlet.http.HttpServlet;
