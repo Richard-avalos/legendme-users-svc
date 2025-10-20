@@ -9,7 +9,7 @@ import com.legendme.users.svc.domain.model.User;
 import com.legendme.users.svc.shared.exceptions.ErrorException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -131,7 +131,7 @@ public class UserController {
         try {
             UserResponse response = findUserService.findById(id)
                     .map(UserRestMapper::toUserResponse)
-                    .orElseThrow(() -> new ErrorException("Usuario no encontrado"));
+                    .orElseThrow(() -> new ErrorException("Usuario no encontrado", "USER-FIND-ID-01", HttpStatus.BAD_REQUEST));
             log.info("getUserById finalizado exitosamente con usuario: {}", response.toString());
             return response;
         } catch (Exception e) {
@@ -171,7 +171,7 @@ public class UserController {
         try {
             UserResponse response = findUserService.findByEmail(request.email())
                     .map(UserRestMapper::toUserResponse)
-                    .orElseThrow(() -> new ErrorException("Usuario no encontrado"));
+                    .orElseThrow(() -> new ErrorException("Usuario no encontrado", "USER-FIND-EMAIL-03", HttpStatus.BAD_REQUEST));
             log.info("Salida de getUserByEmail con respuesta: {}", response.toString());
             return response;
         } catch (ErrorException e) {
@@ -214,7 +214,7 @@ public class UserController {
         try {
             UserResponse response = findUserService.findByUsername(username)
                     .map(UserRestMapper::toUserResponse)
-                    .orElseThrow(() -> new ErrorException("Usuario no encontrado"));
+                    .orElseThrow(() -> new ErrorException("Usuario no encontrado", "USER-FIND-USERNAME-03", HttpStatus.BAD_REQUEST));
             log.info("getUserByUsername finalizado con respuesta: {}", response.toString());
             return response;
         } catch (ErrorException e) {

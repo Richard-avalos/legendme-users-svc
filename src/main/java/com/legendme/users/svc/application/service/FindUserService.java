@@ -2,6 +2,8 @@ package com.legendme.users.svc.application.service;
 
 import com.legendme.users.svc.application.port.out.UserRepository;
 import com.legendme.users.svc.domain.model.User;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import com.legendme.users.svc.shared.exceptions.ErrorException;
 
@@ -16,81 +18,146 @@ import java.util.UUID;
  * por email o nombre de usuario.
  * Este servicio interactúa con el UserRepository para realizar las operaciones
  * necesarias en el almacenamiento de datos.
+ *
  * @see User
  * @see UserRepository
  */
+@Slf4j
 @Service
 public class FindUserService {
 
-    /** Repositorio de usuarios para realizar operaciones de búsqueda y verificación. */
+    /**
+     * Repositorio de usuarios para realizar operaciones de búsqueda y verificación.
+     */
     private final UserRepository userRepository;
 
-    /** Constructor para la inyección de dependencias del UserRepository.
+    /**
+     * Constructor para la inyección de dependencias del UserRepository.
+     *
      * @param userRepository Repositorio de usuarios.
      */
     public FindUserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
-    /** Buscar un usuario por su ID.
+    /**
+     * Buscar un usuario por su ID.
+     *
      * @param id UUID del usuario a buscar.
      * @return Optional que contiene el usuario si se encuentra, o vacío si no existe.
      */
-    public Optional<User> findById(UUID id){
+    public Optional<User> findById(UUID id) {
         if (id == null) {
-            throw new ErrorException("El ID no puede ser nulo");
+            throw new ErrorException("El ID no puede ser nulo", "USER-FIND-ID-01", HttpStatus.BAD_REQUEST);
         }
-        return userRepository.findById(id);
+
+        try {
+            return userRepository.findById(id);
+        } catch (Exception e) {
+            log.error("Error al buscar usuarios por ID en BD: {}", e.getMessage());
+            throw new ErrorException("Error al buscar usuario por ID", "USER-FIND-ID-02", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-    /** Buscar un usuario por su email.
+    /**
+     * Buscar un usuario por su email.
+     *
      * @param email Email del usuario a buscar.
      * @return Optional que contiene el usuario si se encuentra, o vacío si no existe.
      */
-    public Optional<User> findByEmail(String email){
-        if(email == null || email.isBlank()){
-            throw new ErrorException("El email no puede ser nulo o vacío");
+    public Optional<User> findByEmail(String email) {
+        try {
+
+            if (email == null || email.isBlank()) {
+                throw new ErrorException("El email no puede ser nulo o vacío", "USER-FIND-EMAIL-01", HttpStatus.BAD_REQUEST);
+            }
+            return userRepository.findByEmail(email.toLowerCase());
+
+        } catch (ErrorException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error al buscar usuarios por EMAIL: {}", e.getMessage());
+            throw new ErrorException("Error al buscar usuario por email", "USER-FIND-EMAIL-02", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return userRepository.findByEmail(email.toLowerCase() );
     }
 
-    /** Buscar un usuario por su nombre de usuario.
+    /**
+     * Buscar un usuario por su nombre de usuario.
+     *
      * @param username Nombre de usuario a buscar.
      * @return Optional que contiene el usuario si se encuentra, o vacío si no existe.
      */
-    public Optional<User> findByUsername(String username){
-        if(username == null || username.isBlank()){
-            throw new ErrorException("El username no puede ser nulo o vacío");
+    public Optional<User> findByUsername(String username) {
+        try {
+
+            if (username == null || username.isBlank()) {
+                throw new ErrorException("El username no puede ser nulo o vacío", "USER-FIND-USERNAME-01", HttpStatus.BAD_REQUEST);
+            }
+            return userRepository.findByUsername(username.toLowerCase());
+
+        } catch (ErrorException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error al buscar usuarios por USERNAME: {}", e.getMessage());
+            throw new ErrorException("Error al buscar usuario por username", "USER-FIND-USERNAME-02", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return userRepository.findByUsername(username.toLowerCase());
     }
 
-    /** Listar todos los usuarios.
+    /**
+     * Listar todos los usuarios.
+     *
      * @return Lista de todos los usuarios.
      */
-    public List<User> findAll(){
-        return userRepository.findAll();
+    public List<User> findAll() {
+        try {
+            return userRepository.findAll();
+        } catch (ErrorException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error al obtener todos los usuarios de BD: {}", e.getMessage());
+            throw new ErrorException("Error al obtener todos los usuarios", "USER-FIND-ALL-01", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-    /** Verificar si un usuario existe por su email.
+    /**
+     * Verificar si un usuario existe por su email.
+     *
      * @param email Email a verificar.
      * @return true si el usuario existe, false en caso contrario.
      */
-    public boolean existsByEmail(String email){
-        if(email == null || email.isBlank()){
-            throw new ErrorException("El email no puede ser nulo o vacío");
+    public boolean existsByEmail(String email) {
+        if (email == null || email.isBlank()) {
+            throw new ErrorException("El email no puede ser nulo o vacío", "USER-EXISTS-EMAIL-01", HttpStatus.BAD_REQUEST);
         }
-        return userRepository.existsByEmail(email.toLowerCase());
+
+        try {
+            return userRepository.existsByEmail(email.toLowerCase());
+        } catch (Exception e) {
+            log.error("Error al buscar usuario por EMAIL: {}", e.getMessage());
+            throw new ErrorException("Error al verificar existencia de usuario por email", "USER-EXISTS-EMAIL-02", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-    /** Verificar si un usuario existe por su nombre de usuario.
+    /**
+     * Verificar si un usuario existe por su nombre de usuario.
+     *
      * @param username Nombre de usuario a verificar.
      * @return true si el usuario existe, false en caso contrario.
      */
-    public boolean existsByUsername(String username){
-        if(username == null || username.isBlank()){
-            throw new ErrorException("El username no puede ser nulo o vacío");
+    public boolean existsByUsername(String username) {
+
+        try {
+
+            if (username == null || username.isBlank()) {
+                throw new ErrorException("El username no puede ser nulo o vacío", "USER-EXISTS-USERNAME-01", HttpStatus.BAD_REQUEST);
+            }
+            return userRepository.existsByUsername(username.toLowerCase());
+
+        } catch (ErrorException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error al buscar usuario por USERNAME: {}", e.getMessage());
+            throw new ErrorException("Error al verificar existencia de usuario por username", "USER-EXISTS-USERNAME-02", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return userRepository.existsByUsername(username.toLowerCase());
     }
 }

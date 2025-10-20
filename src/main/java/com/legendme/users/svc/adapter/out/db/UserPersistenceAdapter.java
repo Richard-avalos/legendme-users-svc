@@ -3,15 +3,18 @@ package com.legendme.users.svc.adapter.out.db;
 import com.legendme.users.svc.adapter.out.db.mapper.UserPersistenceMapper;
 import com.legendme.users.svc.application.port.out.UserRepository;
 import com.legendme.users.svc.domain.model.User;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+
 /** * UserPersistenceAdapter
  * Implementa la interfaz UserRepository para interactuar con la base de datos utilizando Spring Data JPA.
  */
+@Slf4j
 @Component
 public class UserPersistenceAdapter implements UserRepository {
 

@@ -10,15 +10,6 @@ public class ErrorException extends RuntimeException {
     private final HttpStatus status;
 
     /**
-     * Constructor que crea una excepción con un mensaje, un código de error por defecto y un estado HTTP por defecto.
-     *
-     * @param message Mensaje descriptivo del error.
-     */
-    public ErrorException(String message) {
-        this(message, "USR-001", HttpStatus.BAD_REQUEST);
-    }
-
-    /**
      * Constructor que crea una excepción con un mensaje, un código de error y un estado HTTP específicos.
      *
      * @param message   Mensaje descriptivo del error.

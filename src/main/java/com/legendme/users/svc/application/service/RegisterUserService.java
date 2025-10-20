@@ -5,6 +5,9 @@ import com.legendme.users.svc.adapter.in.rest.dto.UpdateUserRequest;
 import com.legendme.users.svc.application.port.out.UserRepository;
 import com.legendme.users.svc.domain.model.User;
 import com.legendme.users.svc.shared.exceptions.ErrorException;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -21,165 +24,215 @@ import java.util.UUID;
  * @see User
  * @see UserRepository
  */
+@Slf4j
 @Service
+@AllArgsConstructor
 public class RegisterUserService {
 
-    /** Repositorio de usuarios para realizar operaciones de registro y gestión. */
+    /**
+     * Repositorio de usuarios para realizar operaciones de registro y gestión.
+     */
     private final UserRepository userRepository;
 
-    /** Constructor para la inyección de dependencias del UserRepository.
-     * @param userRepository Repositorio de usuarios.
-     */
-    public RegisterUserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
-
-    /** Registrar usuario LOCAL
+    /**
+     * Registrar usuario LOCAL
      * Registra un nuevo usuario con autenticación local.
      * Válida los datos de entrada y utiliza el UserRepository para guardar el usuario.
+     *
      * @param request DTO con los datos del nuevo usuario.
      * @return El usuario registrado con su ID generado.
      * @throws IllegalArgumentException si los datos de entrada son inválidos.
-     * @throws RuntimeException si el email o nombre de usuario ya están en uso.
-    */
-    public User registerLocalUser(CreateUserRequest request){
-        if (!"LOCAL".equalsIgnoreCase(request.provider()))
-            throw new ErrorException("Provider debe ser LOCAL");
+     * @throws RuntimeException         si el email o nombre de usuario ya están en uso.
+     */
+    public User registerLocalUser(CreateUserRequest request) {
 
-        if (request.name()==null || request.name().isBlank())
-            throw new ErrorException("El nombre es obligatorio");
-        if (request.lastname()==null || request.lastname().isBlank())
-            throw new ErrorException("El apellido es obligatorio");
-        if (request.username()==null || request.username().isBlank())
-            throw new ErrorException("El username es obligatorio");
-        if (request.email()==null || request.email().isBlank())
-            throw new ErrorException("El email es obligatorio");
-        if (request.password()==null || request.password().isBlank())
-            throw new ErrorException("El password es obligatorio");
+        try {
 
-        if (!request.email().matches("^[A-Za-z0-9+_.-]+@(.+)$"))
-            throw new ErrorException("El email no es válido");
+            if (!"LOCAL".equalsIgnoreCase(request.provider()))
+                throw new ErrorException("Provider debe ser LOCAL", "USER-CREATE-01", HttpStatus.BAD_REQUEST);
 
-        // Validar que el email y username no existan
-        if(userRepository.existsByEmail(request.email().toLowerCase())){
-            throw new ErrorException("El email ya está en uso");
+            if (request.name() == null || request.name().isBlank())
+                throw new ErrorException("El nombre es obligatorio", "USER-CREATE-02", HttpStatus.BAD_REQUEST);
+            if (request.lastname() == null || request.lastname().isBlank())
+                throw new ErrorException("El apellido es obligatorio", "USER-CREATE-03", HttpStatus.BAD_REQUEST);
+            if (request.username() == null || request.username().isBlank())
+                throw new ErrorException("El username es obligatorio", "USER-CREATE-04", HttpStatus.BAD_REQUEST);
+            if (request.email() == null || request.email().isBlank())
+                throw new ErrorException("El email es obligatorio", "USER-CREATE-05", HttpStatus.BAD_REQUEST);
+            if (request.password() == null || request.password().isBlank())
+                throw new ErrorException("El password es obligatorio", "USER-CREATE-06", HttpStatus.BAD_REQUEST);
+
+            if (!request.email().matches("^[A-Za-z0-9+_.-]+@(.+)$"))
+                throw new ErrorException("El email no es válido", "USER-CREATE-07", HttpStatus.BAD_REQUEST);
+
+            // Validar que el email y username no existan
+            if (userRepository.existsByEmail(request.email().toLowerCase())) {
+                throw new ErrorException("El email ya está en uso", "USER-CREATE-08", HttpStatus.BAD_REQUEST);
+            }
+            // Validar que el username no exista
+            if (userRepository.existsByUsername(request.username().toLowerCase())) {
+                throw new ErrorException("El username ya está en uso", "USER-CREATE-09", HttpStatus.BAD_REQUEST);
+            }
+
+            User user = new User(
+                    null,
+                    request.name(),
+                    request.lastname(),
+                    request.birthDate(),
+                    request.username().toLowerCase(),
+                    request.email().toLowerCase(),
+                    "LOCAL",
+                    true,
+                    new Date(),
+                    new Date()
+            );
+
+
+            return userRepository.save(user, request.password());
+        } catch (ErrorException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error al registrar el usuario local en BD: {}", e.getMessage());
+            throw new ErrorException("Error al registrar el usuario", "USER-CREATE-10", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        // Validar que el username no exista
-        if(userRepository.existsByUsername(request.username().toLowerCase())){
-            throw new ErrorException("El username ya está en uso");
-        }
 
-        User user = new User(
-                null,
-                request.name(),
-                request.lastname(),
-                request.birthDate(),
-                request.username().toLowerCase(),
-                request.email().toLowerCase(),
-                "LOCAL",
-                true,
-                new Date(),
-                new Date()
-        );
-        return userRepository.save(user, request.password());
     }
 
-    /** Crear o actualizar usuario GOOGLE
+    /**
+     * Crear o actualizar usuario GOOGLE
      * Si el usuario ya existe, actualiza su información; si no, lo crea.
+     *
      * @param request DTO con los datos del usuario de Google.
      * @return El usuario creado o actualizado.
      * @throws ErrorException si los datos de entrada son inválidos.
      * @throws ErrorException si el email ya está en uso con otro proveedor.
      */
     public User upsertGoogleUser(CreateUserRequest request) {
-        if (!"GOOGLE".equalsIgnoreCase(request.provider()))
-            throw new ErrorException("Provider debe ser GOOGLE");
+        Optional<User> existingUserOpt;
 
-        Optional<User> existingUserOpt = userRepository.findByEmail(request.email().toLowerCase());
+        try {
 
-        if (existingUserOpt.isPresent() &&
-                !"GOOGLE".equalsIgnoreCase(existingUserOpt.get().provider())) {
-            throw new ErrorException("El email ya está en uso con otro proveedor");
+            if (!"GOOGLE".equalsIgnoreCase(request.provider()))
+                throw new ErrorException("Provider debe ser GOOGLE", "USER-GOOGLE-01", HttpStatus.BAD_REQUEST);
+
+            existingUserOpt = userRepository.findByEmail(request.email().toLowerCase());
+
+            if (existingUserOpt.isPresent() &&
+                    !"GOOGLE".equalsIgnoreCase(existingUserOpt.get().provider())) {
+                throw new ErrorException("El email ya está en uso con otro proveedor", "USER-GOOGLE-02", HttpStatus.BAD_REQUEST);
+            }
+
+            User user = new User(
+                    existingUserOpt.map(User::id).orElse(null),
+                    request.name(),
+                    request.lastname(),
+                    request.birthDate(),
+                    request.username().toLowerCase(),
+                    request.email().toLowerCase(),
+                    "GOOGLE",
+                    true,
+                    new Date(),
+                    new Date()
+            );
+
+            return userRepository.save(user, null);
+        } catch (ErrorException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error al crear/actualizar el usuario de Google en BD: {}", e.getMessage());
+            throw new ErrorException("Error al procesar el usuario de Google", "USER-GOOGLE-03", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-        User user = new User(
-                existingUserOpt.map(User::id).orElse(null),
-                request.name(),
-                request.lastname(),
-                request.birthDate(),
-                request.username().toLowerCase(),
-                request.email().toLowerCase(),
-                "GOOGLE",
-                true,
-                new Date(),
-                new Date()
-        );
-
-        return userRepository.save(user, null);
     }
 
-    /** Actualizar usuario parcialmente
+    /**
+     * Actualizar usuario parcialmente
      * Actualiza los campos proporcionados en el usuario identificado por su ID.
      * Realiza validaciones para evitar conflictos con email y nombre de usuario.
-     * @param id UUID del usuario a actualizar.
+     *
+     * @param id      UUID del usuario a actualizar.
      * @param request DTO con los campos a actualizar (pueden ser nulos).
      * @return El usuario actualizado.
      * @throws ErrorException si el usuario no es encontrado o si hay conflictos con email/username.
      */
     public User updateUserPartial(UUID id, UpdateUserRequest request) {
-        User u = userRepository.findById(id)
-                .orElseThrow(() -> new ErrorException("Usuario no encontrado"));
+        User u;
 
-        // Validaciones opcionales
-        if (request.email() != null && !request.email().equalsIgnoreCase(u.email())) {
-            if (userRepository.existsByEmail(request.email().toLowerCase())) {
-                throw new ErrorException("El correo ya está en uso por otro usuario");
+        try {
+            u = userRepository.findById(id)
+                    .orElseThrow(() -> new ErrorException("Usuario no encontrado", "USER-UPDATE-01", HttpStatus.NOT_FOUND));
+
+            if (request.email() != null && !request.email().equalsIgnoreCase(u.email())) {
+                if (userRepository.existsByEmail(request.email().toLowerCase())) {
+                    throw new ErrorException("El correo ya está en uso por otro usuario", "USER-UPDATE-EMAIL-02", HttpStatus.BAD_REQUEST);
+                }
             }
+
+            if (request.username() != null && !request.username().equalsIgnoreCase(u.username())) {
+                if (userRepository.existsByUsername(request.username().toLowerCase())) {
+                    throw new ErrorException("El nombre de usuario ya está en uso", "USER-UPDATE-USERNAME-03", HttpStatus.BAD_REQUEST);
+                }
+            }
+
+            User updated = new User(
+                    u.id(),
+                    request.name() != null ? request.name() : u.name(),
+                    request.lastname() != null ? request.lastname() : u.lastname(),
+                    request.birthDate() != null ? request.birthDate() : u.birthDate(),
+                    request.username() != null ? request.username().toLowerCase() : u.username(),
+                    request.email() != null ? request.email().toLowerCase() : u.email(),
+                    u.provider(),
+                    u.active(),
+                    u.createdAt(),
+                    new Date() // updatedAt
+            );
+
+            return userRepository.save(updated, null);
+
+        } catch (ErrorException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error al validar email en BD: {}", e.getMessage());
+            throw new ErrorException("Error al actualizar el usuario", "USER-UPDATE-04", HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        if (request.username() != null && !request.username().equalsIgnoreCase(u.username())) {
-            if (userRepository.existsByUsername(request.username().toLowerCase())) {
-                throw new ErrorException("El nombre de usuario ya está en uso");
-            }
-        }
 
-        User updated = new User(
-                u.id(),
-                request.name() != null ? request.name() : u.name(),
-                request.lastname() != null ? request.lastname() : u.lastname(),
-                request.birthDate() != null ? request.birthDate() : u.birthDate(),
-                request.username() != null ? request.username().toLowerCase() : u.username(),
-                request.email() != null ? request.email().toLowerCase() : u.email(),
-                u.provider(),
-                u.active(),
-                u.createdAt(),
-                new Date() // updatedAt
-        );
-
-        return userRepository.save(updated, null);
     }
 
-    /** Desactivar usuario (soft delete)
+    /**
+     * Desactivar usuario (soft delete)
      * Marca al usuario como inactivo sin eliminarlo de la base de datos.
+     *
      * @param id UUID del usuario a desactivar.
      * @throws ErrorException si el usuario no es encontrado.
      */
-    public void deactivateUser(UUID id){
-        User u = userRepository.findById(id)
-                .orElseThrow(() -> new ErrorException("Usuario no encontrado"));
-        User deleted = new User(
-                u.id(),
-                u.name(),
-                u.lastname(),
-                u.birthDate(),
-                u.username(),
-                u.email(),
-                u.provider(),
-                false,
-                u.createdAt(),
-                new Date()
-        );
-        userRepository.save(deleted,null);
+    public void deactivateUser(UUID id) {
+        User u;
+
+        try {
+            u = userRepository.findById(id)
+                    .orElseThrow(() -> new ErrorException("Usuario no encontrado", "USER-DEACT-01", HttpStatus.NOT_FOUND));
+
+            User deleted = new User(
+                    u.id(),
+                    u.name(),
+                    u.lastname(),
+                    u.birthDate(),
+                    u.username(),
+                    u.email(),
+                    u.provider(),
+                    false,
+                    u.createdAt(),
+                    new Date()
+            );
+
+            userRepository.save(deleted, null);
+
+        } catch (ErrorException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error al desactivar el usuario en BD: {}", e.getMessage());
+            throw new ErrorException("Error al desactivar el usuario", "USER-DEACT-02", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 }

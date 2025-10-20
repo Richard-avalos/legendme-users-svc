@@ -20,6 +20,12 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
+/**
+ * Configuration class for Spring Security.
+ *
+ * <p>This class sets up the security filter chain, JWT decoder, and authentication converters
+ * for the application. It also integrates a custom filter for internal service authentication.</p>
+ */
 @Configuration
 @EnableMethodSecurity
 @RequiredArgsConstructor
@@ -27,6 +33,17 @@ public class SecurityConfig {
 
     private final S2SAuthFilter s2SAuthFilter;
 
+    /**
+     * Configures the security filter chain for the application.
+     *
+     * <p>This method disables CSRF, sets up authorization rules for specific endpoints,
+     * adds the custom S2SAuthFilter, and configures the OAuth2 resource server with JWT support.</p>
+     *
+     * @param http the {@link HttpSecurity} object to configure
+     * @param jwtAuthConverter the {@link JwtAuthenticationConverter} for converting JWT claims to authorities
+     * @return the configured {@link SecurityFilterChain}
+     * @throws Exception if an error occurs during configuration
+     */
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http,
                                             JwtAuthenticationConverter jwtAuthConverter
@@ -49,6 +66,16 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * Creates a {@link JwtDecoder} bean for decoding and validating JWTs.
+     *
+     * <p>This method uses a secret key and issuer to configure the decoder. It also sets up
+     * token validation with issuer validation and a timestamp validator.</p>
+     *
+     * @param secret the secret key used for signing JWTs
+     * @param issuer the expected issuer of the JWTs
+     * @return the configured {@link JwtDecoder}
+     */
     @Bean
     JwtDecoder jwtDecoder(@Value("${jwt.secret}") String secret,
                           @Value("${jwt.issuer}") String issuer) {
@@ -65,6 +92,14 @@ public class SecurityConfig {
         return decoder;
     }
 
+    /**
+     * S2SAuthFilter is a custom Spring Security filter that validates requests
+     * based on an internal token provided in the `X-Internal-Token` header.
+     *
+     * <p>This filter decodes and compares the provided token with a pre-configured
+     * internal token. If the tokens match, it sets an authentication object in the
+     * SecurityContext, allowing the request to proceed as an authenticated internal service.</p>
+     */
     @Bean
     JwtAuthenticationConverter jwtAuthConverter() {
         var granted = new JwtGrantedAuthoritiesConverter();
