@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,6 +25,7 @@ import java.util.List;
  * SecurityContext, allowing the request to proceed as an authenticated internal service.
  */
 @Component
+@Slf4j
 public class S2SAuthFilter extends OncePerRequestFilter {
     /**
      * The base64-encoded internal token used for authentication.
@@ -49,15 +51,15 @@ public class S2SAuthFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         String providedToken = request.getHeader("X-Internal-Token");
-
+        log.info("Iniciando getUserByUsername con username: {}", providedToken);
         if (providedToken != null) {
             String decodedToken = new String(Base64.getDecoder().decode(encodedInternalToken), StandardCharsets.UTF_8);
             String decodedProvidedToken = new String(Base64.getDecoder().decode(providedToken), StandardCharsets.UTF_8);
-
             if (decodedProvidedToken.equals(decodedToken)) {
                 var auth = new UsernamePasswordAuthenticationToken(
                         "internal-service", null, List.of()
                 );
+                log.info("Aprobado");
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
         }

@@ -31,8 +31,6 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final S2SAuthFilter s2SAuthFilter;
-
     /**
      * Configures the security filter chain for the application.
      *
@@ -46,16 +44,15 @@ public class SecurityConfig {
      */
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                            JwtAuthenticationConverter jwtAuthConverter
+                                            JwtAuthenticationConverter jwtAuthConverter, S2SAuthFilter s2SAuthFilter
     ) throws Exception {
 
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/health").permitAll()
-                        .requestMatchers("/legendme/users/create/google-user").permitAll()
-                        .requestMatchers("/legendme/users/create").permitAll()
-
+                        .requestMatchers("/actuator/health",
+                                "/legendme/users/create/google-user",
+                                "/legendme/users/create", "/error", "/404").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(s2SAuthFilter, UsernamePasswordAuthenticationFilter.class)

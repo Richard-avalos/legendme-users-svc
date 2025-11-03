@@ -3,6 +3,7 @@ package com.legendme.users.svc.infrastructure.security;
 import com.legendme.users.svc.shared.exceptions.ErrorException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Component;
@@ -40,7 +41,7 @@ public class JwtUtils {
     public String getUserIdFromRequest(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
         if (header == null || !header.startsWith("Bearer ")) {
-            throw new ErrorException("Token no encontrado o inválido");
+            throw new ErrorException("Token no encontrado o inválido", "JWT-01", HttpStatus.INTERNAL_SERVER_ERROR);
         }
         String token = header.substring(7);
         Jwt jwt = jwtDecoder.decode(token);

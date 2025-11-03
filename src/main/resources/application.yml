@@ -1,6 +1,9 @@
 server:
-  port: 8082
-
+  port: 8080
+  error:
+    whitelabel:
+      enabled: false
+    include-stacktrace: never
 spring:
   security:
     s2s-token: ${API_KEY}
@@ -12,7 +15,7 @@ spring:
 
 jwt:
   issuer: legendme-login-svc
-  secret: ${JWT_SECRET:dev256bitsecretpleasechangethisverylong3456789346745678}
+  secret: ${JWT_SECRET}
 
 logging:
   level:
